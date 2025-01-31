@@ -29,7 +29,7 @@ func ReceiveData(conn net.Conn) {
 	}
 }
 
-func connectingWithServer() {
+func ConnectingWithServer() {
   conn, err := net.Dial("tcp", "localhost:8080")
 	if err != nil {
 		fmt.Println("Error connecting:", err)
