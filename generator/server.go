@@ -10,11 +10,11 @@ import (
 )
 
 type infoSend struct{
-	vehicleId int `json:"vehicle_id"`
-	roadInfo int  `json:"road"`
-	direction int `json:"direction"`
+	VehicleId int `json:"vehicle_id"`
+	RoadInfo int  `json:"road"`
+	Direction int `json:"direction"`
 }
-func startServer (){
+func StartServer (){
   fmt.Println("Starting server on port 8080")
 
   ln, err := net.Listen("tcp","localhost:8080")
@@ -43,9 +43,9 @@ func startServer (){
 func generateRandomData() infoSend{
   //In json format
  return infoSend{
-    vehicleId: rand.Intn(100),
-    roadInfo: rand.Intn(4),
-    direction: rand.Intn(4),
+    VehicleId: rand.Intn(100),
+    RoadInfo: rand.Intn(4),
+    Direction: rand.Intn(4),
   } 
 }
 
@@ -64,7 +64,14 @@ func sendData(conn net.Conn){
   }
 }
 
+/* 
+  Note to slef:
+  In go To access the function or struct field to main The function name 
+  should be captializized to be accessed by main
 
+  StartServer() : can be accessed by main because it Has capitalized letter S on beginning
+  sendData() :cannot be accessed inside main because it has lowercase letter s on beginning
+*/
 
 
 
