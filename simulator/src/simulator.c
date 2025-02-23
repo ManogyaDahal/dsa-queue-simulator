@@ -75,6 +75,36 @@ void DrawDashedLine(SDL_Renderer *renderer, int x1, int y1, int x2, int y2, int 
 }
 
 
+void DrawLaneMarking(SDL_Renderer *renderer){
+    SDL_Color laneMarking = {247, 233, 23, 255};
+    SDL_Color laneMarkingRed = {247, 0, 0, 255};
+    
+    SDL_SetRenderDrawColor(renderer, laneMarking.r, laneMarking.g, laneMarking.b, laneMarking.a);
+    // Horizontal road markings
+    DrawDashedLine(renderer, 0, 250, 150, 250, 10);
+    DrawDashedLine(renderer, 0, 350, 150, 350, 10);
+    DrawDashedLine(renderer, 450, 250, 600, 250, 10);
+    DrawDashedLine(renderer, 450, 350, 600, 350, 10);
+
+    SDL_SetRenderDrawColor(renderer, laneMarkingRed.r, laneMarkingRed.g, laneMarkingRed.b, laneMarkingRed.a);
+    // Split middle lane markings - horizontal
+    DrawDashedLine(renderer, 600, 300, 450, 300, 0);  // Middle divider
+    DrawDashedLine(renderer, 0, 300, 150, 300, 0);  // Middle divider
+
+    SDL_SetRenderDrawColor(renderer, laneMarking.r, laneMarking.g, laneMarking.b, laneMarking.a);
+    // Vertical road markings
+    DrawDashedLine(renderer, 250, 0, 250, 150, 10);
+    DrawDashedLine(renderer, 350, 0, 350, 150, 10);
+    DrawDashedLine(renderer, 250, 450, 250, 600, 10);
+    DrawDashedLine(renderer, 350, 450, 350, 600, 10);
+
+    SDL_SetRenderDrawColor(renderer, laneMarkingRed.r, laneMarkingRed.g, laneMarkingRed.b, laneMarkingRed.a);
+    // Split middle lane markings - vertical
+    DrawDashedLine(renderer, 300, 0, 300, 150, 0);  // Middle divider
+    DrawDashedLine(renderer, 300, 600, 300, 450, 0);    // Middle divider
+}
+
+
 void DrawTrafficLight(SDL_Renderer *renderer, int XPos, int YPos, int isGreen, char *orientation) {
 
   const int width = 30;
