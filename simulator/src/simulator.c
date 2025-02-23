@@ -43,25 +43,37 @@ SDL_Renderer* CreateRenderer(SDL_Window *window) {
   return renderer;
 }
 
+
 void DrawDashedLine(SDL_Renderer *renderer, int x1, int y1, int x2, int y2, int dashLength) {
-  int dx = x2 - x1;
-  int dy = y2 - y1;
-  int steps = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int steps = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
+    
+    float xIncrement = (float)dx / steps;
+    float yIncrement = (float)dy / steps;
 
-  float xIncrement = (float)dx / steps;
-  float yIncrement = (float)dy / steps;
+    float x = x1;
+    float y = y1;
 
-  float x = x1;
-  float y = y1;
-
-  for (int i = 0; i <= steps; i++) {
-    if ((i / dashLength) % 2 < 1) {
-      SDL_RenderDrawPoint(renderer, (int)x, (int)y);
+    if (dashLength == 0) {
+        // If dashLength is 0, draw a continuous line
+        for (int i = 0; i <= steps; i++) {
+            SDL_RenderDrawPoint(renderer, (int)x, (int)y);
+            x += xIncrement;
+            y += yIncrement;
+        }
+    } else {
+        // Draw a dashed line
+        for (int i = 0; i <= steps; i++) {
+            if ((i / dashLength) % 2 < 1) {
+                SDL_RenderDrawPoint(renderer, (int)x, (int)y);
+            }
+            x += xIncrement;
+            y += yIncrement;
+        }
     }
-    x += xIncrement;
-    y += yIncrement;
-  }
 }
+
 
 void DrawTrafficLight(SDL_Renderer *renderer, int XPos, int YPos, int isGreen, char *orientation) {
 
@@ -89,42 +101,128 @@ void DrawTrafficLight(SDL_Renderer *renderer, int XPos, int YPos, int isGreen, c
 }
 
 void DrawBackground(SDL_Renderer *renderer) {
-  // Set background color (green for grass)
-  SDL_SetRenderDrawColor(renderer, 34, 139, 34, 255);
-  SDL_RenderClear(renderer);
+    // Set background color (green for grass)
+    SDL_SetRenderDrawColor(renderer, 34, 139, 34, 255);
+    SDL_RenderClear(renderer);
 
-  // Set road color (gray)
-  SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
+    // Set road color (gray)
+    SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
 
-  // Horizontal road
-  SDL_Rect horizontalRoad = {0, 150, 600, 300}; 
-  SDL_RenderFillRect(renderer, &horizontalRoad);
+    // Horizontal road
+    SDL_Rect horizontalRoad = {0, 150, 600, 300}; 
+    SDL_RenderFillRect(renderer, &horizontalRoad);
 
-  // Vertical road
-  SDL_Rect verticalRoad = {150, 0, 300, 600}; 
-  SDL_RenderFillRect(renderer, &verticalRoad);
+    // Vertical road
+    SDL_Rect verticalRoad = {150, 0, 300, 600}; 
+    SDL_RenderFillRect(renderer, &verticalRoad);
 
-  // Dashed lines for lane markings (yellow)
-  SDL_SetRenderDrawColor(renderer, 247, 233, 23, 255);
+    // Dashed lines for lane markings (yellow)
+  DrawLaneMarking(renderer); 
 
-  DrawDashedLine(renderer, 0, 250, 150, 250, 10);
-  DrawDashedLine(renderer, 0, 350, 150, 350, 10);
-
-  DrawDashedLine(renderer, 450, 250, 600, 250, 10);
-  DrawDashedLine(renderer, 450, 350, 600, 350, 10);
-
-  DrawDashedLine(renderer, 250, 0, 250, 150, 10);
-  DrawDashedLine(renderer, 350, 0, 350, 150, 10);
-
-  DrawDashedLine(renderer, 250, 450, 250, 600, 10);
-  DrawDashedLine(renderer, 350, 450, 350, 600, 10);
-
-  DrawTrafficLight(renderer, 175, 255, 0, "vertical");
-  DrawTrafficLight(renderer, 395, 255, 1, "vertical");
-  DrawTrafficLight(renderer, 255, 175, 0, "horizontal");
-  DrawTrafficLight(renderer, 255, 395, 1, "horizontal");
-
+    // Traffic lights
+    DrawTrafficLight(renderer, 175, 255, 0, "vertical");
+    DrawTrafficLight(renderer, 395, 255, 1, "vertical");
+    DrawTrafficLight(renderer, 255, 175, 0, "horizontal");
+    DrawTrafficLight(renderer, 255, 395, 1, "horizontal");
 }
+
+
+typedef struct {
+  int x_start, x_end;
+  int y_start, y_end;
+} LanePosition;
+
+
+// Updated lanePositions array with corrected middle lane splits
+LanePosition lanePositions[4][3] = {
+    // A road lanes (North to South) (A1, A2, A3)
+    // A2 is split into two - leftmost (outgoing), rightmost (incoming)
+    { {150, 250, -30, -30}, {270, 300, -30, -30}, {350, 450, -30, -30} },
+    
+    // B road lanes (South to North) (B1, B2, B3)
+    // B2 is split into two - leftmost (incoming), rightmost (outgoing)
+    { {350, 450, 630, 630}, {300, 330, 630, 630}, {150, 250, 630, 630} },
+    
+    // C road lanes (East to West) (C1, C2, C3)
+    // C2 is split into two - uppermost (outgoing), lowermost (incoming)
+    { {630, 630, 150, 250}, {630, 630, 270, 300}, {630, 630, 350, 450} },
+    
+    // D road lanes (West to East) (D1, D2, D3)
+    // D2 is split into two - uppermost (incoming), lowermost (outgoing)
+    { {-30, -30, 350, 450}, {-30, -30, 300, 330}, {-30, -30, 150, 250} }
+};
+
+void getLaneCenter(char road, int lane, int *x, int *y) {
+    int roadIndex = road - 'A';  // Convert 'A'-'D' to index 0-3
+    int laneIndex = lane - 1;    // Convert 1-3 to index 0-2
+
+    int middleLaneOffset = 0;
+    if (lane == 2) {
+        if (road == 'A') {
+            middleLaneOffset = -15; // Move left for outgoing
+        } else if (road == 'B') {
+            middleLaneOffset = 15;  // Move right for incoming
+        } else if (road == 'D') {
+            middleLaneOffset = 15;  // Move down for outgoing
+        } else if (road == 'C') {
+            middleLaneOffset = -15; // Move up for incoming
+        }
+    }
+
+    if (road == 'A' || road == 'B') {
+        *x = ((lanePositions[roadIndex][laneIndex].x_start + lanePositions[roadIndex][laneIndex].x_end) / 2) + middleLaneOffset;
+        *y = (road == 'A') ? -30 : SCREEN_HEIGHT + 10;
+    } else {
+        *x = (road == 'C') ? SCREEN_WIDTH + 10 : -30;
+        *y = ((lanePositions[roadIndex][laneIndex].y_start + lanePositions[roadIndex][laneIndex].y_end) / 2) + middleLaneOffset;
+    }
+
+    printf("Road: %c, Lane: %d, X: %d, Y: %d, Offset: %d\n", road, lane, *x, *y, middleLaneOffset);
+}
+
+// void getLaneCenter(char road, int lane, int *x, int *y) {
+//     int roadIndex = road - 'A';  // Convert 'A'-'D' to index 0-3
+//     int laneIndex = lane - 1;    // Convert 1-3 to index 0-2
+//     // Adjust middle lane (lane 2) position based on direction
+//     int middleLaneOffset = 0;
+//     if (lane == 2) {
+//         // For vertical roads
+//         if (road == 'A') {
+//             middleLaneOffset = -15; // Move left for outgoing
+//         } if (road == 'B') {
+//             middleLaneOffset = 15;  // Move right for incoming
+//         }
+//         // For horizontal roads
+//         if (road == 'D') {
+//             middleLaneOffset = 15;  // Move down for outgoing
+//         } if (road == 'C') {
+//             middleLaneOffset = -15; // Move up for incoming
+//         }
+//
+//     }
+//     
+//     // For horizontal roads (D and C)
+//     if (road == 'D') {
+//         *x = -30;  // Start beyond left edge
+//         *y = (lanePositions[roadIndex][laneIndex].y_start + lanePositions[roadIndex][laneIndex].y_end) / 2 - 20 / 2 + middleLaneOffset;
+//     }
+//     if (road == 'C') {
+//         *x = SCREEN_WIDTH + 10;  // Start beyond right edge
+//         *y = (lanePositions[roadIndex][laneIndex].y_start + lanePositions[roadIndex][laneIndex].y_end) / 2 - 20 / 2 + middleLaneOffset;
+//     }
+//     // For vertical roads (A and B)
+//     if (road == 'A') {
+//
+//         *x = (lanePositions[roadIndex][laneIndex].x_start + lanePositions[roadIndex][laneIndex].x_end) / 2 - 20 / 2 + middleLaneOffset;
+//         *y = -30;  // Start beyond top edge
+//     }
+//     if (road == 'B') {
+//         *x = (lanePositions[roadIndex][laneIndex].x_start + lanePositions[roadIndex][laneIndex].x_end) / 2 - 20 / 2 + middleLaneOffset;
+//         *y = SCREEN_HEIGHT + 10;  // Start beyond bottom edge
+//     }
+//
+//     printf("Road: %c, Lane: %d, Original X: %d, Original Y: %d, Offset: %d\n", road, lane, *x, *y, middleLaneOffset);
+// }
 
 
 void drawVehicle(SDL_Renderer *renderer, Vehicle *vehicle) {
@@ -134,120 +232,53 @@ void drawVehicle(SDL_Renderer *renderer, Vehicle *vehicle) {
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
-//     typedef struct {
-//         int x_start, x_end;
-//         int y_start, y_end;
-//     } LanePosition;
-//
-// LanePosition lanePositions[4][3] = {
-//     // A road lanes (A1, A2, A3)
-//     { {150, 250, 0, 150}, {250, 350, 0, 150}, {350, 450, 0, 150} }, //check y_end imp!!!
-//     
-//     // B road lanes (B1, B2, B3)
-//     {{350, 450, 450, 600}, {250, 350, 450, 600}, {150, 250, 450, 600}},
-//     
-//     // C road lanes (C1, C2, C3)
-//     { {450, 600, 150, 250}, {450, 600, 250, 350}, {450, 600, 350, 450} },
-//     
-//     // D road lanes (D1, D2, D3)
-//     {  {0, 150, 350, 450}, {0, 150, 250, 350},{0, 150, 150, 250} }
-// };
-//    
-// void getLaneCenter(char road, int lane, int *x, int *y) {
-//     int roadIndex = road - 'A';  // Convert 'A'-'D' to index 0-3
-//     int laneIndex = lane - 1;    // Convert 1-3 to index 0-2
-//
-//     *x = (lanePositions[roadIndex][laneIndex].x_start + lanePositions[roadIndex][laneIndex].x_end) / 2 - 20 / 2;
-//     *y = (lanePositions[roadIndex][laneIndex].y_start + lanePositions[roadIndex][laneIndex].y_end) / 2 - 20 / 2;
-//    // Debugging output
-//     printf("Vehicle starting at Road %c, Lane %d → Center (%d, %d)\n", road, lane, *x, *y);
-// }
-//
-// void moveVehicle(Vehicle *vehicle) {
-//     int targetX, targetY;
-//     getLaneCenter(vehicle->targetRoad, vehicle->targetLane, &targetX, &targetY);
-//
-//     int reachedX = (abs(vehicle->rect.x - targetX) < vehicle->speed);
-//     int reachedY = (abs(vehicle->rect.y - targetY) < vehicle->speed);
-//
-//     // Move right or left first
-//     if (!reachedX) {
-//         if (vehicle->rect.x < targetX) vehicle->rect.x += vehicle->speed;
-//         else vehicle->rect.x -= vehicle->speed;
-//     } 
-//     // Move up or down after reaching correct X position
-//     else if (!reachedY) {
-//         if (vehicle->rect.y < targetY) vehicle->rect.y += vehicle->speed;
-//         else vehicle->rect.y -= vehicle->speed;
-//     }
-//
-//     // Snap into position if very close
-//     if (reachedX) vehicle->rect.x = targetX;
-//     if (reachedY) vehicle->rect.y = targetY;
-//
-//     // Debugging output
-//     printf("Vehicle %d Position: (%d, %d) Target: (%d, %d)\n", vehicle->vehicle_id, vehicle->rect.x, vehicle->rect.y, targetX, targetY);
-// }
 
-typedef struct {
-  int x_start, x_end;
-  int y_start, y_end;
-} LanePosition;
-
-LanePosition lanePositions[4][3] = {
-  // A road lanes (A1, A2, A3)
-  { {150, 250, 0, 150}, {250, 350, 0, 150}, {350, 450, 0, 150} }, //check y_end imp!!!
-
-  // B road lanes (B1, B2, B3)
-  {{350, 450, 450, 600}, {250, 350, 450, 600}, {150, 250, 450, 600}},
-
-  // C road lanes (C1, C2, C3)
-  { {450, 600, 150, 250}, {450, 600, 250, 350}, {450, 600, 350, 450} },
-
-  // D road lanes (D1, D2, D3)
-  {  {0, 150, 350, 450}, {0, 150, 250, 350},{0, 150, 150, 250} }
-};
-
-void getLaneCenter(char road, int lane, int *x, int *y) {
-  int roadIndex = road - 'A';  // Convert 'A'-'D' to index 0-3
-  int laneIndex = lane - 1;    // Convert 1-3 to index 0-2
-
-  *x = (lanePositions[roadIndex][laneIndex].x_start + lanePositions[roadIndex][laneIndex].x_end) / 2 - 20 / 2;
-  *y = (lanePositions[roadIndex][laneIndex].y_start + lanePositions[roadIndex][laneIndex].y_end) / 2 - 20 / 2;
-
-  // Debugging output
-  printf("Vehicle starting at Road %c, Lane %d → Center (%d, %d)\n", road, lane, *x, *y);
-}
 
 void moveVehicle(Vehicle *vehicle) {
-  int targetX, targetY;
-  getLaneCenter(vehicle->targetRoad, vehicle->targetLane, &targetX, &targetY);
-
-  int reachedX = (abs(vehicle->rect.x - targetX) <= vehicle->speed);
-  int reachedY = (abs(vehicle->rect.y - targetY) <= vehicle->speed);
-
-  if ((vehicle->road_id == 'A' && vehicle->targetRoad == 'C') || 
-    (vehicle->road_id == 'B' && vehicle->targetRoad == 'D')) {
-    // Move Y first (for A3 → C1 and B3 → D1)
-    if (!reachedY) {
-      if (vehicle->rect.y < targetY) vehicle->rect.y += vehicle->speed;  // Move down
-      else vehicle->rect.y -= vehicle->speed;  // Move up
-    } else if (!reachedX) {
-      if (vehicle->rect.x < targetX) vehicle->rect.x += vehicle->speed;  // Move right
-      else vehicle->rect.x -= vehicle->speed;  // Move left
+    int targetX, targetY;
+    
+    // Set target positions beyond screen edges based on target road
+    if (vehicle->targetRoad == 'A') {
+        targetX = (lanePositions[0][vehicle->targetLane - 1].x_start + lanePositions[0][vehicle->targetLane - 1].x_end) / 2 - 20 / 2;
+        targetY = -30;  // Move beyond top edge
     }
-  } else {
-    // Default: Move X first (for D3 → A1 and C3 → B1)
-    if (!reachedX) {
-      if (vehicle->rect.x < targetX) vehicle->rect.x += vehicle->speed;  // Move right
-      else vehicle->rect.x -= vehicle->speed;  // Move left
-    } else if (!reachedY) {
-      if (vehicle->rect.y < targetY) vehicle->rect.y += vehicle->speed;  // Move down
-      else vehicle->rect.y -= vehicle->speed;  // Move up
+    else if (vehicle->targetRoad == 'B') {
+        targetX = (lanePositions[1][vehicle->targetLane - 1].x_start + lanePositions[1][vehicle->targetLane - 1].x_end) / 2 - 20 / 2;
+        targetY = SCREEN_HEIGHT + 10;  // Move beyond bottom edge
     }
-  }
+    else if (vehicle->targetRoad == 'C') {
+        targetX = SCREEN_WIDTH + 10;  // Move beyond right edge
+        targetY = (lanePositions[2][vehicle->targetLane - 1].y_start + lanePositions[2][vehicle->targetLane - 1].y_end) / 2 - 20 / 2;
+    }
+    else if (vehicle->targetRoad == 'D') {
+        targetX = -30;  // Move beyond left edge
+        targetY = (lanePositions[3][vehicle->targetLane - 1].y_start + lanePositions[3][vehicle->targetLane - 1].y_end) / 2 - 20 / 2;
+    }
+
+    int reachedX = (abs(vehicle->rect.x - targetX) <= vehicle->speed);
+    int reachedY = (abs(vehicle->rect.y - targetY) <= vehicle->speed);
+
+    if ((vehicle->road_id == 'A' && vehicle->targetRoad == 'C') || 
+        (vehicle->road_id == 'B' && vehicle->targetRoad == 'D')) {
+        // Move Y first (for A3 → C1 and B3 → D1)
+        if (!reachedY) {
+            if (vehicle->rect.y < targetY) vehicle->rect.y += vehicle->speed;
+            else vehicle->rect.y -= vehicle->speed;
+        } else if (!reachedX) {
+            if (vehicle->rect.x < targetX) vehicle->rect.x += vehicle->speed;
+            else vehicle->rect.x -= vehicle->speed;
+        }
+    } else {
+        // Default: Move X first (for D3 → A1 and C3 → B1)
+        if (!reachedX) {
+            if (vehicle->rect.x < targetX) vehicle->rect.x += vehicle->speed;
+            else vehicle->rect.x -= vehicle->speed;
+        } else if (!reachedY) {
+            if (vehicle->rect.y < targetY) vehicle->rect.y += vehicle->speed;
+            else vehicle->rect.y -= vehicle->speed;
+        }
+    }
 }
-
 int main() {
   // Socket related code commented out during the development of UI elements
   // int sock = create_socket();
@@ -276,6 +307,7 @@ int main() {
     2, 'A', 3, 2,  // ID=2, starts at road 'A', lane 3
     'C', 1                     // Target is road 'C', lane 1
   };
+  getLaneCenter(vehicle2.road_id, vehicle2.lane, &vehicle2.rect.x, &vehicle2.rect.y); // connect_to_server(sock, "127.0.0.1");
 
   Vehicle vehicle3 = {
     {0, 0, 20, 20},  // Temporary position (updated below)
@@ -286,13 +318,55 @@ int main() {
 
   Vehicle vehicle4 = {
     {600, 600, 20, 20},  // Temporary values (updated below)
-    2, 'D', 3, 2,  // ID=2, starts at road 'A', lane 3
-    'A', 1                     // Target is road 'C', lane 1
+    2, 'B', 3, 2,  // ID=2, starts at road 'A', lane 3
+    'D', 1                     // Target is road 'C', lane 1
   };
   getLaneCenter(vehicle4.road_id, vehicle4.lane, &vehicle4.rect.x, &vehicle4.rect.y);
   // Set correct initial position (centered in A3)
-  getLaneCenter(vehicle2.road_id, vehicle2.lane, &vehicle2.rect.x, &vehicle2.rect.y); // connect_to_server(sock, "127.0.0.1");
+Vehicle vehicle5= {
+    {0, 0, 20, 20},  // Dimensions and initial position (will be updated by getLaneCenter)
+    5,               // vehicle_id = 5
+    'D',             // Starting from road D (left side)
+    2,               // Using lane 2 (middle lane)
+    2,               // Speed
+    'C',             // Target road C (right side)
+    2                // Target lane 2 (middle lane)
+};
+getLaneCenter(vehicle5.road_id, vehicle5.lane, &vehicle5.rect.x, &vehicle5.rect.y);
 
+Vehicle vehicle6= {
+    {0, 0, 20, 20},  // Dimensions and initial position (will be updated by getLaneCenter)
+    6,               // vehicle_id = 6
+    'C',             // Starting from road D (left side)
+    2,               // Using lane 2 (middle lane)
+    2,               // Speed
+    'D',             // Target road C (right side)
+    2                // Target lane 2 (middle lane)
+};
+getLaneCenter(vehicle6.road_id, vehicle6.lane, &vehicle6.rect.x, &vehicle6.rect.y);
+
+Vehicle vehicle7= {
+    {0, 0, 20, 20},  // Dimensions and initial position (will be updated by getLaneCenter)
+    7,               // vehicle_id = 6
+    'A',             // Starting from road D (left side)
+    2,               // Using lane 2 (middle lane)
+    2,               // Speed
+    'B',             // Target road C (right side)
+    2                // Target lane 2 (middle lane)
+};
+getLaneCenter(vehicle7.road_id, vehicle7.lane, &vehicle7.rect.x, &vehicle7.rect.y);
+
+
+Vehicle vehicle8= {
+    {0, 0, 20, 20},  // Dimensions and initial position (will be updated by getLaneCenter)
+    8,               // vehicle_id = 6
+    'B',             // Starting from road D (left side)
+    2,               // Using lane 2 (middle lane)
+    2,               // Speed
+    'A',             // Target road C (right side)
+    2                // Target lane 2 (middle lane)
+};
+getLaneCenter(vehicle8.road_id, vehicle8.lane, &vehicle8.rect.x, &vehicle8.rect.y);
   int running = 1;
   SDL_Event event;
   while (running) {
@@ -305,10 +379,21 @@ int main() {
     moveVehicle(&vehicle2); 
     moveVehicle(&vehicle3); 
     moveVehicle(&vehicle4); 
+    moveVehicle(&vehicle5); 
+    moveVehicle(&vehicle6); 
+    moveVehicle(&vehicle7); 
+    moveVehicle(&vehicle8); 
+
     DrawBackground(renderer);
 
     drawVehicle(renderer, &vehicle1); 
     drawVehicle(renderer, &vehicle2); 
+    drawVehicle(renderer, &vehicle3); 
+    drawVehicle(renderer, &vehicle4); 
+    drawVehicle(renderer, &vehicle5); 
+    drawVehicle(renderer, &vehicle6); 
+    drawVehicle(renderer, &vehicle7); 
+    drawVehicle(renderer, &vehicle8); 
 
     SDL_RenderPresent(renderer); 
     SDL_Delay(30);
