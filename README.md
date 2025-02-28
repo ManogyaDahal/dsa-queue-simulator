@@ -106,5 +106,5 @@ The simulation runs in a window and displays vehicles moving through a four-way 
 
 ---
 ## DEMO:
-![simulation ](extras/trafficSimulation.gif)
+![trafficSimulation ](extras/trafficSimulation.gif)
 
