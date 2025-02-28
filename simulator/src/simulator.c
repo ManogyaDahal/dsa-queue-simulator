@@ -304,49 +304,97 @@ void moveVehicle(Vehicle *vehicle) {
         }
     }
   /* Vehicles Stopping Logic */
-  int shouldStop = 0;  
-  int stopX = vehicle->rect.x;  
-  int stopY = vehicle->rect.y;  
+  // int shouldStop = 0;  
+  // int stopX = 0;  
+  // int stopY = 0;  
+  //
+  // //For lane 2 only 
+  // if(vehicle->lane == 2 ){
+  //   if(vehicle->road_id == 'A' && !eastWestGreen){
+  //     stopY = 150 - 20;
+  //       shouldStop = (vehicle->rect.y >= stopY); 
+  //   }
+  //
+  //   if(vehicle->road_id == 'B' && !eastWestGreen){
+  //     stopY=450;
+  //     shouldStop =(vehicle->rect.y <= stopY);
+  //   }
+  //
+  //   if(vehicle->road_id == 'D' && !northSouthGreen ){
+  //     stopX=150-20; 
+  //     shouldStop = (vehicle->rect.x >= stopX); 
+  //   }
+  //
+  //   if(vehicle->road_id == 'C' && !northSouthGreen ){
+  //     stopX= 450; 
+  //     shouldStop =(vehicle->rect.x <= stopX); 
+  //   }
+  // }
+  //
+  // if (shouldStop) {
+  //   // Move gradually to stop position
+  //   if (vehicle->road_id == 'A' || vehicle->road_id == 'B') {
+  //     if (vehicle->rect.y != stopY) {
+  //       vehicle->rect.y += (vehicle->rect.y < stopY) ? vehicle->speed : -vehicle->speed;
+  //       if (abs(vehicle->rect.y - stopY) <= vehicle->speed) vehicle->rect.y = stopY;
+  //     }
+  //   } else {
+  //     if (vehicle->rect.x != stopX) {
+  //       vehicle->rect.x += (vehicle->rect.x < stopX) ? vehicle->speed : -vehicle->speed;
+  //       if (abs(vehicle->rect.x - stopX) <= vehicle->speed) vehicle->rect.x = stopX;
+  //     }
+  //   }
+  // }
+  int shouldStop = 0;
+  int stopX = vehicle->rect.x;
+  int stopY = vehicle->rect.y;
 
-  //For lane 2 only 
-  if(vehicle->lane == 2 ){
-    if(vehicle->road_id == 'A' && northSouthGreen){
+  // For lane 2 only
+  if (vehicle->lane == 2) {
+    if (vehicle->road_id == 'A' && northSouthGreen) {
       stopY = 150 - 20;
-      if(vehicle->rect.y >= stopY){
+      if (vehicle->rect.y == stopY) {
         shouldStop = 1;
+      } else {
+        shouldStop =0;
       }
     }
 
-    if(vehicle->road_id == 'B' && northSouthGreen ){
-      stopY=450;
-      if(vehicle->rect.y <= stopY){
-        shouldStop = 1; 
+    if (vehicle->road_id == 'B' && northSouthGreen) {
+      stopY = 450;
+      if (vehicle->rect.y == stopY) {
+        shouldStop = 1;
+      }else{
+        shouldStop =0; 
       }
     }
 
-    if(vehicle->road_id == 'D' && eastWestGreen){
-      stopX=150-20; 
-      if(vehicle->rect.x >= stopX){
+    if (vehicle->road_id == 'D' && eastWestGreen) {
+      stopX = 150 - 20;
+      if (vehicle->rect.x == stopX) {
         shouldStop = 1;
+      }else{
+        shouldStop=0;
       }
     }
 
-    if(vehicle->road_id == 'C' && eastWestGreen){
-      stopX= 450; 
-      if(vehicle->rect.x <= stopX){
+    if (vehicle->road_id == 'C' && eastWestGreen) {
+      stopX = 450;
+      if (vehicle->rect.x == stopX) {
         shouldStop = 1;
+      }else{
+        shouldStop = 0;
       }
     }
   }
 
-  if(shouldStop){
-    vehicle->rect.x = stopX; 
-    vehicle->rect.y = stopY; 
-    printf("Vehicle %d stopped at (%d, %d) due to red light\n", 
-            vehicle->vehicle_id, vehicle->rect.x, vehicle->rect.y);
+    if (shouldStop) {
+        vehicle->rect.x = stopX;
+        vehicle->rect.y = stopY;
+        printf("Vehicle %d stopped at (%d, %d) due to red light\n",
+               vehicle->vehicle_id, vehicle->rect.x, vehicle->rect.y);
         return;
-
-  }
+    }
 
     int reachedX = (abs(vehicle->rect.x - targetX) <= vehicle->speed);
     int reachedY = (abs(vehicle->rect.y - targetY) <= vehicle->speed);
