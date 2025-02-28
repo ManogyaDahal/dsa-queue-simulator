@@ -460,78 +460,73 @@ int main() {
     return 1;
   }
 
-  Vehicle vehicle1 = {
-    {0, 0, 20, 20},  // Temporary position (updated below)
-    1, 'D', 3, 2,    // ID=1, starts at road 'D', lane 3, speed=3
-    'A', 1          // Target is road 'A', lane 1
-  };
-  getLaneCenter(vehicle1.road_id, vehicle1.lane, &vehicle1.rect.x, &vehicle1.rect.y);
+  VehicleQueue queue;
+  initQueue(&queue);
 
-  Vehicle vehicle2 = {
-    {0, 0, 20, 20},  // Temporary values (updated below)
-    2, 'A', 3, 2,  // ID=2, starts at road 'A', lane 3
-    'C', 1                     // Target is road 'C', lane 1
-  };
-  getLaneCenter(vehicle2.road_id, vehicle2.lane, &vehicle2.rect.x, &vehicle2.rect.y); // connect_to_server(sock, "127.0.0.1");
+  Vehicle *v1 = (Vehicle *)malloc(sizeof(Vehicle));
+  v1->vehicle_id = 1;
+  v1->road_id = 'C';
+  v1->lane = 2;
+  v1->speed = 2;
+  v1->rect.w = 20;
+  v1->rect.h = 20;
+  v1->targetRoad = 'D';
+  v1->targetLane =2;
+  getLaneCenter(v1->road_id, v1->lane, &v1->rect.x, &v1->rect.y);
+  enqueue(&queue, v1);
 
-  Vehicle vehicle3 = {
-    {0, 0, 20, 20},  // Temporary position (updated below)
-    1, 'C', 3, 2,    // ID=1, starts at road 'D', lane 3, speed=3
-    'B', 1          // Target is road 'A', lane 1
-  };
-  getLaneCenter(vehicle3.road_id, vehicle3.lane, &vehicle3.rect.x, &vehicle3.rect.y);
+  Vehicle *v2 = (Vehicle *)malloc(sizeof(Vehicle));
+  v2->vehicle_id = 2;
+  v2->road_id = 'D';
+  v2->lane = 2;
+  v2->speed = 2;
+  v2->rect.w = 20;
+  v2->rect.h = 20;
+  v2->targetRoad = 'C';
+  v2->targetLane = 2;
+  getLaneCenter(v2->road_id, v2->lane, &v2->rect.x, &v2->rect.y);
+  enqueue(&queue, v2);
 
-  Vehicle vehicle4 = {
-    {600, 600, 20, 20},  // Temporary values (updated below)
-    2, 'B', 3, 2,  // ID=2, starts at road 'A', lane 3
-    'D', 1                     // Target is road 'C', lane 1
-  };
-  getLaneCenter(vehicle4.road_id, vehicle4.lane, &vehicle4.rect.x, &vehicle4.rect.y);
-  // Set correct initial position (centered in A3)
-Vehicle vehicle5= {
-    {0, 0, 20, 20},  // Dimensions and initial position (will be updated by getLaneCenter)
-    5,               // vehicle_id = 5
-    'D',             // Starting from road D (left side)
-    2,               // Using lane 2 (middle lane)
-    2,               // Speed
-    'C',             // Target road C (right side)
-    2                // Target lane 2 (middle lane)
-};
-getLaneCenter(vehicle5.road_id, vehicle5.lane, &vehicle5.rect.x, &vehicle5.rect.y);
+  Vehicle *v3 = (Vehicle *)malloc(sizeof(Vehicle));
+  v3->vehicle_id = 3;
+  v3->road_id = 'A';
+  v3->lane = 2;
+  v3->speed = 2;
+  v3->rect.w = 20;
+  v3->rect.h = 20;
+  v3->targetRoad = 'B';
+  v3->targetLane = 2;
+  getLaneCenter(v3->road_id, v3->lane, &v3->rect.x, &v3->rect.y);
+  enqueue(&queue, v3);
 
-Vehicle vehicle6= {
-    {0, 0, 20, 20},  // Dimensions and initial position (will be updated by getLaneCenter)
-    6,               // vehicle_id = 6
-    'C',             // Starting from road D (left side)
-    2,               // Using lane 2 (middle lane)
-    2,               // Speed
-    'D',             // Target road C (right side)
-    2                // Target lane 2 (middle lane)
-};
-getLaneCenter(vehicle6.road_id, vehicle6.lane, &vehicle6.rect.x, &vehicle6.rect.y);
-
-Vehicle vehicle7= {
-    {0, 0, 20, 20},  // Dimensions and initial position (will be updated by getLaneCenter)
-    7,               // vehicle_id = 6
-    'A',             // Starting from road D (left side)
-    2,               // Using lane 2 (middle lane)
-    2,               // Speed
-    'B',             // Target road C (right side)
-    2                // Target lane 2 (middle lane)
-};
-getLaneCenter(vehicle7.road_id, vehicle7.lane, &vehicle7.rect.x, &vehicle7.rect.y);
+  Vehicle *v4 = (Vehicle *)malloc(sizeof(Vehicle));
+  v4->vehicle_id = 4;
+  v4->road_id = 'B';
+  v4->lane = 2;
+  v4->speed = 2;
+  v4->rect.w = 20;
+  v4->rect.h = 20;
+  v4->targetRoad = 'A';
+  v4->targetLane = 2;
+  getLaneCenter(v4->road_id, v4->lane, &v4->rect.x, &v4->rect.y);
+  enqueue(&queue, v4);
 
 
-Vehicle vehicle8= {
-    {0, 0, 20, 20},  // Dimensions and initial position (will be updated by getLaneCenter)
-    8,               // vehicle_id = 6
-    'B',             // Starting from road D (left side)
-    2,               // Using lane 2 (middle lane)
-    2,               // Speed
-    'A',             // Target road C (right side)
-    2                // Target lane 2 (middle lane)
-};
-getLaneCenter(vehicle8.road_id, vehicle8.lane, &vehicle8.rect.x, &vehicle8.rect.y);
+  Vehicle *v5 = (Vehicle *)malloc(sizeof(Vehicle));
+  v5->vehicle_id = 5;
+  v5->road_id = 'D';
+  v5->lane = 3;
+  v5->speed = 2;
+  v5->rect.w = 20;
+  v5->rect.h = 20;
+  v5->targetRoad = 'A';
+  v5->targetLane = 1;
+  getLaneCenter(v5->road_id, v5->lane, &v5->rect.x, &v5->rect.y);
+  enqueue(&queue, v5);
+
+  Vehicle *active_vehicles[MAX_VEHICLES] = {0};
+  int num_active_vehicles = 0;
+
   int running = 1;
   SDL_Event event;
   while (running) {
@@ -540,33 +535,49 @@ getLaneCenter(vehicle8.road_id, vehicle8.lane, &vehicle8.rect.x, &vehicle8.rect.
         running = 0;
       }
     }
+    while (!isQueueEmpty(&queue) && num_active_vehicles < MAX_VEHICLES) {
+      Vehicle *v = dequeue(&queue);
+      active_vehicles[num_active_vehicles++] = v;
+    }
     updateTrafficLights(); 
-
-    moveVehicle(&vehicle1); 
-    moveVehicle(&vehicle2); 
-    moveVehicle(&vehicle3); 
-    moveVehicle(&vehicle4); 
-    moveVehicle(&vehicle5); 
-    moveVehicle(&vehicle6); 
-    moveVehicle(&vehicle7); 
-    moveVehicle(&vehicle8); 
+    for (int i = 0; i < num_active_vehicles; i++) {
+      if (active_vehicles[i]) {
+        moveVehicle(active_vehicles[i]);
+        int targetX, targetY;
+        getLaneCenter(active_vehicles[i]->targetRoad, active_vehicles[i]->targetLane, &targetX, &targetY);
+        if (active_vehicles[i]->rect.x == targetX && active_vehicles[i]->rect.y == targetY) {
+          printf("Vehicle %d reached target and is removed.\n", active_vehicles[i]->vehicle_id);
+          free(active_vehicles[i]);
+          active_vehicles[i] = NULL;
+        }
+      }
+    }
 
     DrawBackground(renderer);
+    int write_idx = 0;
+    for (int i = 0; i < num_active_vehicles; i++) {
+      if (active_vehicles[i] != NULL) {
+        active_vehicles[write_idx++] = active_vehicles[i];
+      }
+    }
+    num_active_vehicles = write_idx;
 
-    drawVehicle(renderer, &vehicle1); 
-    drawVehicle(renderer, &vehicle2); 
-    drawVehicle(renderer, &vehicle3); 
-    drawVehicle(renderer, &vehicle4); 
-    drawVehicle(renderer, &vehicle5); 
-    drawVehicle(renderer, &vehicle6); 
-    drawVehicle(renderer, &vehicle7); 
-    drawVehicle(renderer, &vehicle8); 
+    DrawBackground(renderer);
+    TrafficLightState(renderer, northSouthGreen, eastWestGreen);
+
+    for (int i = 0; i < num_active_vehicles; i++) {
+      if (active_vehicles[i]) {
+        drawVehicle(renderer, active_vehicles[i]);
+      }
+    }
 
     SDL_RenderPresent(renderer); 
     SDL_Delay(30);
 
   }
-
+  for (int i = 0; i < num_active_vehicles; i++) {
+    if (active_vehicles[i]) free(active_vehicles[i]);
+  }
   // receive_data(sock);
 
   // Close socket
