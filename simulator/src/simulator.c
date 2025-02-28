@@ -267,6 +267,17 @@ void getLaneCenter(char road, int lane, int *x, int *y) {
 //     printf("Road: %c, Lane: %d, Original X: %d, Original Y: %d, Offset: %d\n", road, lane, *x, *y, middleLaneOffset);
 // }
 
+Uint32 lastSwitchTime = 0;
+
+void updateTrafficLights() {
+    Uint32 currentTime = SDL_GetTicks();
+    if (currentTime - lastSwitchTime > 8555) {
+        northSouthGreen = !northSouthGreen;
+        eastWestGreen = !eastWestGreen;
+        lastSwitchTime = currentTime;
+        printf("Traffic Light Changed! North-South: %d, East-West: %d\n", northSouthGreen, eastWestGreen);
+    }
+}
 
 void drawVehicle(SDL_Renderer *renderer, Vehicle *vehicle) {
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);  // Red vehicle
@@ -526,6 +537,8 @@ getLaneCenter(vehicle8.road_id, vehicle8.lane, &vehicle8.rect.x, &vehicle8.rect.
         running = 0;
       }
     }
+    updateTrafficLights(); 
+
     moveVehicle(&vehicle1); 
     moveVehicle(&vehicle2); 
     moveVehicle(&vehicle3); 
