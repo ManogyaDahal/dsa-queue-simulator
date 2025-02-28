@@ -9,6 +9,9 @@
 const int SCREEN_WIDTH = 600;
 const int SCREEN_HEIGHT = 600;
 
+static int northSouthGreen = 1; 
+static int eastWestGreen= 0; 
+
 typedef struct{
   SDL_Rect rect;
   int vehicle_id;
@@ -130,7 +133,10 @@ void DrawTrafficLight(SDL_Renderer *renderer, int XPos, int YPos, int isGreen, c
   SDL_RenderFillRect(renderer, &trafficLightRect);
 }
 
-void TrafficLightState(SDL_Renderer *renderer, int northSouthGreen, int eastWestGreen) {
+void TrafficLightState(SDL_Renderer *renderer, int nsGreen , int ewGreen) {
+
+  northSouthGreen = nsGreen; 
+  eastWestGreen = ewGreen; 
     // Vertical lights control North-South traffic
     DrawTrafficLight(renderer, 175, 255, northSouthGreen, "vertical"); // North-South left lane
     DrawTrafficLight(renderer, 395, 255, northSouthGreen, "vertical"); // North-South right lane
@@ -160,7 +166,7 @@ void DrawBackground(SDL_Renderer *renderer) {
   DrawLaneMarking(renderer); 
 
     // Traffic lights
-  //TrafficLightState(renderer,)
+  TrafficLightState(renderer,northSouthGreen,eastWestGreen); 
 }
 
 
@@ -269,6 +275,7 @@ void drawVehicle(SDL_Renderer *renderer, Vehicle *vehicle) {
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
+
 void moveVehicle(Vehicle *vehicle) {
     int targetX, targetY;
     getLaneCenter(vehicle->targetRoad, vehicle->targetLane, &targetX, &targetY);
@@ -296,6 +303,50 @@ void moveVehicle(Vehicle *vehicle) {
             return;
         }
     }
+  /* Vehicles Stopping Logic */
+  int shouldStop = 0;  
+  int stopX = vehicle->rect.x;  
+  int stopY = vehicle->rect.y;  
+
+  //For lane 2 only 
+  if(vehicle->lane == 2 ){
+    if(vehicle->road_id == 'A' && northSouthGreen){
+      stopY = 150 - 20;
+      if(vehicle->rect.y >= stopY){
+        shouldStop = 1;
+      }
+    }
+
+    if(vehicle->road_id == 'B' && northSouthGreen ){
+      stopY=450;
+      if(vehicle->rect.y <= stopY){
+        shouldStop = 1; 
+      }
+    }
+
+    if(vehicle->road_id == 'D' && eastWestGreen){
+      stopX=150-20; 
+      if(vehicle->rect.x >= stopX){
+        shouldStop = 1;
+      }
+    }
+
+    if(vehicle->road_id == 'C' && eastWestGreen){
+      stopX= 450; 
+      if(vehicle->rect.x <= stopX){
+        shouldStop = 1;
+      }
+    }
+  }
+
+  if(shouldStop){
+    vehicle->rect.x = stopX; 
+    vehicle->rect.y = stopY; 
+    printf("Vehicle %d stopped at (%d, %d) due to red light\n", 
+            vehicle->vehicle_id, vehicle->rect.x, vehicle->rect.y);
+        return;
+
+  }
 
     int reachedX = (abs(vehicle->rect.x - targetX) <= vehicle->speed);
     int reachedY = (abs(vehicle->rect.y - targetY) <= vehicle->speed);
@@ -322,6 +373,10 @@ void moveVehicle(Vehicle *vehicle) {
     if (reachedX) vehicle->rect.x = targetX;
     if (reachedY) vehicle->rect.y = targetY;
 
+    if (reachedX && reachedY) {
+        vehicle->road_id = vehicle->targetRoad;
+        vehicle->lane = vehicle->targetLane;
+    }
     // Debugging Output
     printf("Vehicle %d Position: (%d, %d) Target: (%d, %d)\n", 
             vehicle->vehicle_id, vehicle->rect.x, vehicle->rect.y, targetX, targetY);
